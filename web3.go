@@ -16,6 +16,7 @@ type Web3 struct {
 
 func NewWeb3(provider string) (*Web3, error) {
 	return NewWeb3WithProxy(provider, "")
+
 }
 
 func NewWeb3WithProxy(provider, proxy string) (*Web3, error) {
