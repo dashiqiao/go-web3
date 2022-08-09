@@ -1,4 +1,4 @@
-<h1 >go_web3</h1>
+<h1 >go-web3</h1>
 
 Ethereum Golang API
 
@@ -175,7 +175,7 @@ fmt.Printf("Send approve tx hash %v\n", txHash)
 
 ## Contributing
 
-go_web3 welcome contributions. Please follow the guidelines when opening issues and contributing code to the repo.
+go-web3 welcome contributions. Please follow the guidelines when opening issues and contributing code to the repo.
 
 ### Contributing
 
@@ -201,10 +201,10 @@ As outlined in Keavy McMinn's article ["How to write the perfect pull request"](
 
 ### Issues
 
-Feel free to submit issues and enhancement requests [here](https://github.com/dashiqiao/go_web3/issues/new). Please consider [how to ask a good question](https://stackoverflow.com/help/how-to-ask) and take the time to research your issue before asking for help.
+Feel free to submit issues and enhancement requests [here](https://github.com/dashiqiao/go-web3/issues/new). Please consider [how to ask a good question](https://stackoverflow.com/help/how-to-ask) and take the time to research your issue before asking for help.
 
 Duplicate questions will be closed.
 
 ## License
 
-The go_web3 source code is available under the [LGPL-3.0](LICENSE) license.
+The go-web3 source code is available under the [LGPL-3.0](LICENSE) license.
