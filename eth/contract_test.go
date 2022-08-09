@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/dashiqiao/go-web3/rpc"
-	"github.com/dashiqiao/go-web3/types"
-	"github.com/dashiqiao/go-web3/utils"
+	"github.com/dashiqiao/go_web3/rpc"
+	"github.com/dashiqiao/go_web3/types"
+	"github.com/dashiqiao/go_web3/utils"
 	"github.com/ethereum/go-ethereum/common"
 )
 

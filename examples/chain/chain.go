@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 
-	"github.com/dashiqiao/go-web3"
+	"github.com/dashiqiao/go_web3"
 )
 
 func main() {
