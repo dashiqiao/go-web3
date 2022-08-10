@@ -136,7 +136,7 @@ func (e *Eth) SendRawTransactionNonce(
 	if err != nil {
 		return hash, err
 	}
-	fmt.Printf("nonce %v\n", nonce)
+	fmt.Println("nonce :", nonce)
 
 	tx := eTypes.NewTransaction(nonce, to, amount, gasLimit, gasPrice, data)
 
