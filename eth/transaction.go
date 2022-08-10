@@ -122,21 +122,21 @@ func (e *Eth) SendRawTransaction(
 
 }
 
-func (e *Eth) SendRawTransactionNonce(
+func (e *Eth) SendRawTransactionByNonce(
 	to common.Address,
 	amount *big.Int,
 	gasLimit uint64,
 	gasPrice *big.Int,
 	data []byte,
-	random uint64,
+	nonce uint64,
 ) (common.Hash, error) {
-	nonce, err := e.GetNonce(e.address, nil)
-	nonce += random
+	//nonce, err := e.GetNonce(e.address, nil)
+	//nonce += random
 	var hash common.Hash
-	if err != nil {
-		return hash, err
-	}
-	fmt.Println("nonce :", nonce)
+	//if err != nil {
+	//	return hash, err
+	//}
+	//fmt.Println("nonce :", nonce)
 
 	tx := eTypes.NewTransaction(nonce, to, amount, gasLimit, gasPrice, data)
 
