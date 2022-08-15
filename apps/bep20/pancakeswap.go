@@ -128,6 +128,7 @@ func (e *ERC20PancakeSwap) SwapExactTokensForTokensSupportingFeeOnTransferTokens
 
 	fmt.Println("")
 	fmt.Printf("code: === %x", code)
+	fmt.Println("")
 
 	return e.invokeAndWait(code, gasPrice, gasTipCap, gasFeeCap)
 }
