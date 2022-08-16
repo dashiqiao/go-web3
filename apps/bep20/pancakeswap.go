@@ -107,7 +107,7 @@ func (e *ERC20PancakeSwap) Approve(spender common.Address, limit, gasPrice, gasT
 		return common.Hash{}, err
 	}
 
-	return e.invokeAndWait(code, gasPrice, gasTipCap, gasFeeCap)
+	return e.invokeAndWait(code, big.NewInt(0), gasPrice, gasTipCap, gasFeeCap)
 }
 
 func (e *ERC20PancakeSwap) Transfer(to common.Address, amount, gasPrice, gasTipCap, gasFeeCap *big.Int) (common.Hash, error) {
@@ -116,10 +116,10 @@ func (e *ERC20PancakeSwap) Transfer(to common.Address, amount, gasPrice, gasTipC
 		return common.Hash{}, err
 	}
 
-	return e.invokeAndWait(code, gasPrice, gasTipCap, gasFeeCap)
+	return e.invokeAndWait(code, big.NewInt(0), gasPrice, gasTipCap, gasFeeCap)
 }
 
-func (e *ERC20PancakeSwap) SwapExactTokensForTokensSupportingFeeOnTransferTokens(amountIn, amountOutMin *big.Int, path []common.Address, to common.Address, deadline, gasPrice, gasTipCap, gasFeeCap *big.Int) (common.Hash, error) {
+func (e *ERC20PancakeSwap) SwapExactTokensForTokensSupportingFeeOnTransferTokens(amountIn, amountOutMin *big.Int, path []common.Address, to common.Address, deadline, gasPrice, gasLimit, gasTipCap, gasFeeCap *big.Int) (common.Hash, error) {
 	code, err := e.contr.EncodeABI("swapExactTokensForTokensSupportingFeeOnTransferTokens",
 		amountIn, amountOutMin, path, to, deadline)
 	if err != nil {
@@ -130,7 +130,7 @@ func (e *ERC20PancakeSwap) SwapExactTokensForTokensSupportingFeeOnTransferTokens
 	fmt.Printf("code: === %x", code)
 	fmt.Println("")
 
-	return e.invokeAndWait(code, gasPrice, gasTipCap, gasFeeCap)
+	return e.invokeAndWait(code, gasPrice, gasLimit, gasTipCap, gasFeeCap)
 }
 
 func (e *ERC20PancakeSwap) EstimateGasLimit(to common.Address, data []byte, gasPrice, wei *big.Int) (uint64, error) {
@@ -287,17 +287,18 @@ func (e *ERC20PancakeSwap) SyncSendEIP1559Tx(
 	}
 }
 
-func (e *ERC20PancakeSwap) invokeAndWait(code []byte, gasPrice, gasTipCap, gasFeeCap *big.Int) (common.Hash, error) {
-	gasLimit, err := e.EstimateGasLimit(e.contr.Address(), code, nil, nil)
+func (e *ERC20PancakeSwap) invokeAndWait(code []byte, gasPrice, gasLimit, gasTipCap, gasFeeCap *big.Int) (common.Hash, error) {
+	estimateGasLimit, err := e.EstimateGasLimit(e.contr.Address(), code, nil, nil)
 	if err != nil {
 		return common.Hash{}, err
 	}
+	estimateGasLimit += gasLimit.Uint64()
 
 	var tx *eTypes.Receipt
 	if gasPrice != nil {
-		tx, err = e.SyncSendRawTransactionForTx(gasPrice, gasLimit, e.contr.Address(), code, nil)
+		tx, err = e.SyncSendRawTransactionForTx(gasPrice, estimateGasLimit, e.contr.Address(), code, nil)
 	} else {
-		tx, err = e.SyncSendEIP1559Tx(gasTipCap, gasFeeCap, gasLimit, e.contr.Address(), code, nil)
+		tx, err = e.SyncSendEIP1559Tx(gasTipCap, gasFeeCap, estimateGasLimit, e.contr.Address(), code, nil)
 	}
 
 	if err != nil {
