@@ -126,9 +126,9 @@ func (e *ERC20PancakeSwap) SwapExactTokensForTokensSupportingFeeOnTransferTokens
 		return common.Hash{}, err
 	}
 
-	fmt.Println("")
-	fmt.Printf("code: === %x", code)
-	fmt.Println("")
+	//fmt.Println("")
+	//fmt.Printf("code: === %x", code)
+	//fmt.Println("")
 
 	return e.invokeAndWait(code, gasPrice, gasLimit, gasTipCap, gasFeeCap)
 }
