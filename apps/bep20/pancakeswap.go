@@ -320,7 +320,7 @@ func (e *ERC20PancakeSwap) invokeAndWait(code []byte, gasPrice, gasLimit, gasTip
 	}
 
 	if e.confirmation == 0 {
-		return tx.TxHash, big.NewInt(0), nil
+		return tx.TxHash, big.NewInt(int64(estimateGasLimit)), nil
 	}
 
 	if err := e.WaitBlock(uint64(e.confirmation)); err != nil {
