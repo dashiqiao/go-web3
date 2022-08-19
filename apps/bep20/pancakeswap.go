@@ -121,7 +121,7 @@ func (e *ERC20PancakeSwap) Transfer(to common.Address, amount, gasPrice, gasTipC
 	return
 }
 
-func (e *ERC20PancakeSwap) SwapExactTokensForTokensSupportingFeeOnTransferTokens(amountIn, amountOutMin *big.Int, path []common.Address, to common.Address, deadline, gasPrice, gasLimit, gasTipCap, gasFeeCap *big.Int) (common.Hash, *big.Int, error) {
+func (e *ERC20PancakeSwap) SwapExactTokensForTokensSupportingFeeOnTransferTokens(amountIn, amountOutMin *big.Int, path []common.Address, to common.Address, deadline, gasPrice, gasLimit, gasTipCap, gasFeeCap *big.Int) (hash common.Hash, ng *big.Int, err error) {
 	code, err := e.contr.EncodeABI("swapExactTokensForTokensSupportingFeeOnTransferTokens",
 		amountIn, amountOutMin, path, to, deadline)
 	if err != nil {
@@ -132,7 +132,9 @@ func (e *ERC20PancakeSwap) SwapExactTokensForTokensSupportingFeeOnTransferTokens
 	//fmt.Printf("code: === %x", code)
 	//fmt.Println("")
 
-	return e.invokeAndWait(code, gasPrice, gasLimit, gasTipCap, gasFeeCap)
+	hash, ng, err = e.invokeAndWait(code, gasPrice, gasLimit, gasTipCap, gasFeeCap)
+	fmt.Println("ng == ", ng)
+	return
 }
 
 func (e *ERC20PancakeSwap) SwapExactTokensForTokensSupportingFeeOnTransferTokensCall(amountIn, amountOutMin *big.Int, path []common.Address, to common.Address, deadline, gasPrice, gasLimit, gasTipCap, gasFeeCap *big.Int) (common.Hash, error) {
@@ -305,7 +307,7 @@ func (e *ERC20PancakeSwap) invokeAndWait(code []byte, gasPrice, gasLimit, gasTip
 		return common.Hash{}, big.NewInt(0), err
 	}
 	estimateGasLimit += gasLimit.Uint64()
-
+	fmt.Println("estimateGasLimit : ", estimateGasLimit)
 	var tx *eTypes.Receipt
 	if gasPrice != nil {
 		tx, err = e.SyncSendRawTransactionForTx(gasPrice, estimateGasLimit, e.contr.Address(), code, nil)
