@@ -133,7 +133,7 @@ func (e *ERC20PancakeSwap) SwapExactTokensForTokensSupportingFeeOnTransferTokens
 	//fmt.Println("")
 
 	hash, ng, err = e.invokeAndWait(code, gasPrice, gasLimit, gasTipCap, gasFeeCap)
-	fmt.Println("ng == ", ng)
+	//fmt.Println("ng == ", ng)
 	return
 }
 
@@ -307,7 +307,7 @@ func (e *ERC20PancakeSwap) invokeAndWait(code []byte, gasPrice, gasLimit, gasTip
 		return common.Hash{}, big.NewInt(0), err
 	}
 	estimateGasLimit += gasLimit.Uint64()
-	fmt.Println("estimateGasLimit : ", estimateGasLimit)
+	//fmt.Println("estimateGasLimit : ", estimateGasLimit)
 	var tx *eTypes.Receipt
 	if gasPrice != nil {
 		tx, err = e.SyncSendRawTransactionForTx(gasPrice, estimateGasLimit, e.contr.Address(), code, nil)
