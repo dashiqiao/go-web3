@@ -100,14 +100,14 @@ func (e *ERC20PancakeSwap) BalanceOf(owner common.Address) (*big.Int, error) {
 	return allow, nil
 }
 
-func (e *ERC20PancakeSwap) Approve(spender common.Address, limit, gasPrice, gasTipCap, gasFeeCap *big.Int) (hash common.Hash, err error) {
+func (e *ERC20PancakeSwap) Approve(spender common.Address, limit, gasPrice, gasTipCap, gasFeeCap *big.Int) (hash common.Hash, ng *big.Int, err error) {
 
 	code, err := e.contr.EncodeABI("approve", spender, limit)
 	if err != nil {
-		return common.Hash{}, err
+		return common.Hash{}, big.NewInt(0), err
 	}
 
-	hash, _, err = e.invokeAndWait(code, big.NewInt(0), gasPrice, gasTipCap, gasFeeCap)
+	hash, ng, err = e.invokeAndWait(code, big.NewInt(0), gasPrice, gasTipCap, gasFeeCap)
 	return
 }
 
