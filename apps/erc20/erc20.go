@@ -100,23 +100,34 @@ func (e *ERC20) BalanceOf(owner common.Address) (*big.Int, error) {
 	return allow, nil
 }
 
-func (e *ERC20) Approve(spender common.Address, limit, gasPrice, gasTipCap, gasFeeCap *big.Int) (common.Hash, error) {
+func (e *ERC20) Approve(spender common.Address, limit, gasPrice, gasTipCap, gasFeeCap *big.Int) (hash common.Hash, ng *big.Int, err error) {
+
+	code, err := e.contr.EncodeABI("approve", spender, limit)
+	if err != nil {
+		return common.Hash{}, big.NewInt(0), err
+	}
+
+	return e.invokeAndWait(code, gasPrice, gasTipCap, gasFeeCap)
+}
+
+func (e *ERC20) ApproveCall(spender common.Address, limit, gasPrice, gasLimit, gasTipCap, gasFeeCap *big.Int) (hash common.Hash, err error) {
 
 	code, err := e.contr.EncodeABI("approve", spender, limit)
 	if err != nil {
 		return common.Hash{}, err
 	}
 
-	return e.invokeAndWait(code, gasPrice, gasTipCap, gasFeeCap)
+	return e.invokeAndWaitCall(code, gasPrice, gasLimit, gasTipCap, gasFeeCap)
 }
 
-func (e *ERC20) Transfer(to common.Address, amount, gasPrice, gasTipCap, gasFeeCap *big.Int) (common.Hash, error) {
+func (e *ERC20) Transfer(to common.Address, amount, gasPrice, gasTipCap, gasFeeCap *big.Int) (hash common.Hash, err error) {
 	code, err := e.contr.EncodeABI("transfer", to, amount)
 	if err != nil {
 		return common.Hash{}, err
 	}
 
-	return e.invokeAndWait(code, gasPrice, gasTipCap, gasFeeCap)
+	hash, _, err = e.invokeAndWait(code, gasPrice, gasTipCap, gasFeeCap)
+	return
 }
 
 func (e *ERC20) EstimateGasLimit(to common.Address, data []byte, gasPrice, wei *big.Int) (uint64, error) {
@@ -273,10 +284,10 @@ func (e *ERC20) SyncSendEIP1559Tx(
 	}
 }
 
-func (e *ERC20) invokeAndWait(code []byte, gasPrice, gasTipCap, gasFeeCap *big.Int) (common.Hash, error) {
+func (e *ERC20) invokeAndWait(code []byte, gasPrice, gasTipCap, gasFeeCap *big.Int) (common.Hash, *big.Int, error) {
 	gasLimit, err := e.EstimateGasLimit(e.contr.Address(), code, nil, nil)
 	if err != nil {
-		return common.Hash{}, err
+		return common.Hash{}, big.NewInt(0), err
 	}
 
 	var tx *eTypes.Receipt
@@ -284,6 +295,31 @@ func (e *ERC20) invokeAndWait(code []byte, gasPrice, gasTipCap, gasFeeCap *big.I
 		tx, err = e.SyncSendRawTransactionForTx(gasPrice, gasLimit, e.contr.Address(), code, nil)
 	} else {
 		tx, err = e.SyncSendEIP1559Tx(gasTipCap, gasFeeCap, gasLimit, e.contr.Address(), code, nil)
+	}
+
+	if err != nil {
+		return common.Hash{}, big.NewInt(0), err
+	}
+
+	if e.confirmation == 0 {
+		return tx.TxHash, big.NewInt(int64(gasLimit)), nil
+	}
+
+	if err := e.WaitBlock(uint64(e.confirmation)); err != nil {
+		return common.Hash{}, big.NewInt(0), err
+	}
+
+	return tx.TxHash, big.NewInt(int64(gasLimit)), nil
+}
+
+func (e *ERC20) invokeAndWaitCall(code []byte, gasPrice, gasLimit, gasTipCap, gasFeeCap *big.Int) (common.Hash, error) {
+
+	var tx *eTypes.Receipt
+	var err error
+	if gasPrice != nil {
+		tx, err = e.SyncSendRawTransactionForTx(gasPrice, gasLimit.Uint64(), e.contr.Address(), code, nil)
+	} else {
+		tx, err = e.SyncSendEIP1559Tx(gasTipCap, gasFeeCap, gasLimit.Uint64(), e.contr.Address(), code, nil)
 	}
 
 	if err != nil {
