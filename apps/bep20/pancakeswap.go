@@ -409,13 +409,13 @@ func (e *ERC20PancakeSwap) invokeAndWaitNonce(code []byte, gasPrice, gasLimit, g
 		return common.Hash{}, big.NewInt(0), err
 	}
 	estimateGasLimit += gasLimit.Uint64()
-	fmt.Println("estimateGasLimit : ", estimateGasLimit)
+	//fmt.Println("estimateGasLimit : ", estimateGasLimit)
 	var tx *eTypes.Receipt
 	if gasPrice != nil {
 		if nonce > 0 {
-			tx, err = e.SyncSendRawTransactionForTxNonce(gasPrice, gasLimit.Uint64(), e.contr.Address(), code, nil, nonce)
+			tx, err = e.SyncSendRawTransactionForTxNonce(gasPrice, estimateGasLimit, e.contr.Address(), code, nil, nonce)
 		} else {
-			tx, err = e.SyncSendRawTransactionForTx(gasPrice, gasLimit.Uint64(), e.contr.Address(), code, nil)
+			tx, err = e.SyncSendRawTransactionForTx(gasPrice, estimateGasLimit, e.contr.Address(), code, nil)
 		}
 	} else {
 		tx, err = e.SyncSendEIP1559Tx(gasTipCap, gasFeeCap, estimateGasLimit, e.contr.Address(), code, nil)
