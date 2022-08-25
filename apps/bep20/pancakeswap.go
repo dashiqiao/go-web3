@@ -413,9 +413,9 @@ func (e *ERC20PancakeSwap) invokeAndWaitNonce(code []byte, gasPrice, gasLimit, g
 	var tx *eTypes.Receipt
 	if gasPrice != nil {
 		if nonce > 0 {
-			tx, err = e.SyncSendRawTransactionForTx(gasPrice, gasLimit.Uint64(), e.contr.Address(), code, nil)
-		} else {
 			tx, err = e.SyncSendRawTransactionForTxNonce(gasPrice, gasLimit.Uint64(), e.contr.Address(), code, nil, nonce)
+		} else {
+			tx, err = e.SyncSendRawTransactionForTx(gasPrice, gasLimit.Uint64(), e.contr.Address(), code, nil)
 		}
 	} else {
 		tx, err = e.SyncSendEIP1559Tx(gasTipCap, gasFeeCap, estimateGasLimit, e.contr.Address(), code, nil)
@@ -441,9 +441,9 @@ func (e *ERC20PancakeSwap) invokeAndWaitCall(code []byte, gasPrice, gasLimit, ga
 	var err error
 	if gasPrice != nil {
 		if nonce > 0 {
-			tx, err = e.SyncSendRawTransactionForTx(gasPrice, gasLimit.Uint64(), e.contr.Address(), code, nil)
-		} else {
 			tx, err = e.SyncSendRawTransactionForTxNonce(gasPrice, gasLimit.Uint64(), e.contr.Address(), code, nil, nonce)
+		} else {
+			tx, err = e.SyncSendRawTransactionForTx(gasPrice, gasLimit.Uint64(), e.contr.Address(), code, nil)
 		}
 	} else {
 		tx, err = e.SyncSendEIP1559Tx(gasTipCap, gasFeeCap, gasLimit.Uint64(), e.contr.Address(), code, nil)
