@@ -144,7 +144,17 @@ func (e *ERC20PancakeSwap) SwapExactTokensForTokensSupportingFeeOnTransferTokens
 		return common.Hash{}, err
 	}
 
-	return e.invokeAndWaitCall(code, gasPrice, gasLimit, gasTipCap, gasFeeCap)
+	return e.invokeAndWaitCall(code, gasPrice, gasLimit, gasTipCap, gasFeeCap, 0)
+}
+
+func (e *ERC20PancakeSwap) SwapExactTokensForTokensSupportingFeeOnTransferTokensCallNonce(amountIn, amountOutMin *big.Int, path []common.Address, to common.Address, deadline, gasPrice, gasLimit, gasTipCap, gasFeeCap *big.Int, nonce uint64) (common.Hash, error) {
+	code, err := e.contr.EncodeABI("swapExactTokensForTokensSupportingFeeOnTransferTokens",
+		amountIn, amountOutMin, path, to, deadline)
+	if err != nil {
+		return common.Hash{}, err
+	}
+
+	return e.invokeAndWaitCall(code, gasPrice, gasLimit, gasTipCap, gasFeeCap, nonce)
 }
 
 func (e *ERC20PancakeSwap) EstimateGasLimit(to common.Address, data []byte, gasPrice, wei *big.Int) (uint64, error) {
@@ -194,6 +204,59 @@ func (e *ERC20PancakeSwap) SyncSendRawTransactionForTx(
 	gasPrice *big.Int, gasLimit uint64, to common.Address, data []byte, wei *big.Int,
 ) (*eTypes.Receipt, error) {
 	hash, err := e.w3.Eth.SendRawTransaction(to, wei, gasLimit, gasPrice, data)
+	if err != nil {
+		return nil, err
+	}
+
+	type ReceiptCh struct {
+		ret *eTypes.Receipt
+		err error
+	}
+
+	var timeoutFlag int32
+	ch := make(chan *ReceiptCh, 1)
+
+	go func() {
+		for {
+			receipt, err := e.w3.Eth.GetTransactionReceipt(hash)
+			if err != nil && err.Error() != "not found" {
+				ch <- &ReceiptCh{
+					err: err,
+				}
+				break
+			}
+			if receipt != nil {
+				ch <- &ReceiptCh{
+					ret: receipt,
+					err: nil,
+				}
+				break
+			}
+			if atomic.LoadInt32(&timeoutFlag) == 1 {
+				break
+			}
+		}
+		// fmt.Println("send tx done")
+	}()
+
+	select {
+	case result := <-ch:
+		if result.err != nil {
+			return nil, err
+		}
+
+		return result.ret, nil
+	case <-time.After(time.Duration(e.txPollTimeout) * time.Second):
+		atomic.StoreInt32(&timeoutFlag, 1)
+		return nil, fmt.Errorf("transaction was not mined within %v seconds, "+
+			"please make sure your transaction was properly sent. Be aware that it might still be mined!", e.txPollTimeout)
+	}
+}
+
+func (e *ERC20PancakeSwap) SyncSendRawTransactionForTxNonce(
+	gasPrice *big.Int, gasLimit uint64, to common.Address, data []byte, wei *big.Int, nonce uint64,
+) (*eTypes.Receipt, error) {
+	hash, err := e.w3.Eth.SendRawTransactionByNonce(to, wei, gasLimit, gasPrice, data, nonce)
 	if err != nil {
 		return nil, err
 	}
@@ -330,11 +393,15 @@ func (e *ERC20PancakeSwap) invokeAndWait(code []byte, gasPrice, gasLimit, gasTip
 	return tx.TxHash, big.NewInt(int64(estimateGasLimit)), nil
 }
 
-func (e *ERC20PancakeSwap) invokeAndWaitCall(code []byte, gasPrice, gasLimit, gasTipCap, gasFeeCap *big.Int) (common.Hash, error) {
+func (e *ERC20PancakeSwap) invokeAndWaitCall(code []byte, gasPrice, gasLimit, gasTipCap, gasFeeCap *big.Int, nonce uint64) (common.Hash, error) {
 	var tx *eTypes.Receipt
 	var err error
 	if gasPrice != nil {
-		tx, err = e.SyncSendRawTransactionForTx(gasPrice, gasLimit.Uint64(), e.contr.Address(), code, nil)
+		if nonce > 0 {
+			tx, err = e.SyncSendRawTransactionForTx(gasPrice, gasLimit.Uint64(), e.contr.Address(), code, nil)
+		} else {
+			tx, err = e.SyncSendRawTransactionForTxNonce(gasPrice, gasLimit.Uint64(), e.contr.Address(), code, nil, nonce)
+		}
 	} else {
 		tx, err = e.SyncSendEIP1559Tx(gasTipCap, gasFeeCap, gasLimit.Uint64(), e.contr.Address(), code, nil)
 	}
