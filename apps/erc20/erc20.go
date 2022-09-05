@@ -138,6 +138,14 @@ func (e *ERC20) Transfer(to common.Address, amount, gasPrice, gasTipCap, gasFeeC
 	return e.invokeAndWait(code, gasPrice, gasTipCap, gasFeeCap)
 }
 
+func (e *ERC20) TransferCall(to common.Address, amount, gasPrice, gasLimit, gasTipCap, gasFeeCap *big.Int) (hash common.Hash, err error) {
+	code, err := e.contr.EncodeABI("transfer", to, amount)
+	if err != nil {
+		return common.Hash{}, err
+	}
+	return e.invokeAndWaitCall(code, gasPrice, gasLimit, gasTipCap, gasFeeCap)
+}
+
 func (e *ERC20) EstimateGasLimit(to common.Address, data []byte, gasPrice, wei *big.Int) (uint64, error) {
 	call := &types.CallMsg{
 		To:    to,
