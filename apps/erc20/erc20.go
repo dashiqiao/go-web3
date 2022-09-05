@@ -130,14 +130,12 @@ func (e *ERC20) ApproveCall(spender common.Address, limit, gasPrice, gasLimit, g
 	return e.invokeAndWaitCall(code, gasPrice, gasLimit, gasTipCap, gasFeeCap)
 }
 
-func (e *ERC20) Transfer(to common.Address, amount, gasPrice, gasTipCap, gasFeeCap *big.Int) (hash common.Hash, err error) {
+func (e *ERC20) Transfer(to common.Address, amount, gasPrice, gasTipCap, gasFeeCap *big.Int) (hash common.Hash, ng *big.Int, err error) {
 	code, err := e.contr.EncodeABI("transfer", to, amount)
 	if err != nil {
-		return common.Hash{}, err
+		return common.Hash{}, big.NewInt(0), err
 	}
-
-	hash, _, err = e.invokeAndWait(code, gasPrice, gasTipCap, gasFeeCap)
-	return
+	return e.invokeAndWait(code, gasPrice, gasTipCap, gasFeeCap)
 }
 
 func (e *ERC20) EstimateGasLimit(to common.Address, data []byte, gasPrice, wei *big.Int) (uint64, error) {

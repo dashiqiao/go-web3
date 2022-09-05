@@ -103,13 +103,14 @@ func (e *ERC721) SetApprovalForAll(
 	gasPrice *big.Int,
 	gasTipCap *big.Int,
 	gasFeeCap *big.Int,
-) (common.Hash, error) {
+) (hash common.Hash, err error) {
 	code, err := e.contr.EncodeABI("setApprovalForAll", spender, approve)
 	if err != nil {
 		return common.Hash{}, err
 	}
 
-	return e.invokeAndWait(code, gasPrice, gasTipCap, gasFeeCap)
+	hash, _, err = e.invokeAndWait(code, gasPrice, gasTipCap, gasFeeCap)
+	return
 }
 
 func (e *ERC721) TransferFrom(
@@ -119,12 +120,28 @@ func (e *ERC721) TransferFrom(
 	gasPrice *big.Int,
 	gasTipCap *big.Int,
 	gasFeeCap *big.Int,
+) (common.Hash, *big.Int, error) {
+	code, err := e.contr.EncodeABI("transferFrom", from, to, tokenId)
+	if err != nil {
+		return common.Hash{}, big.NewInt(0), err
+	}
+	return e.invokeAndWait(code, gasPrice, gasTipCap, gasFeeCap)
+}
+
+func (e *ERC721) TransferFromGasLimit(
+	from common.Address,
+	to common.Address,
+	tokenId *big.Int,
+	gasPrice *big.Int,
+	gasLimit *big.Int,
+	gasTipCap *big.Int,
+	gasFeeCap *big.Int,
 ) (common.Hash, error) {
 	code, err := e.contr.EncodeABI("transferFrom", from, to, tokenId)
 	if err != nil {
 		return common.Hash{}, err
 	}
-	return e.invokeAndWait(code, gasPrice, gasTipCap, gasFeeCap)
+	return e.invokeAndWaitCall(code, gasPrice, gasLimit, gasTipCap, gasFeeCap)
 }
 
 func (e *ERC721) IsApprovalForAll(owner, spender common.Address) (bool, error) {
@@ -293,10 +310,10 @@ func (e *ERC721) SyncSendRawTransactionForTx(
 	}
 }
 
-func (e *ERC721) invokeAndWait(code []byte, gasPrice, gasTipCap, gasFeeCap *big.Int) (common.Hash, error) {
+func (e *ERC721) invokeAndWait(code []byte, gasPrice, gasTipCap, gasFeeCap *big.Int) (common.Hash, *big.Int, error) {
 	gasLimit, err := e.EstimateGasLimit(e.contr.Address(), code, nil, nil)
 	if err != nil {
-		return common.Hash{}, err
+		return common.Hash{}, big.NewInt(0), err
 	}
 
 	var tx *eTypes.Receipt
@@ -304,6 +321,31 @@ func (e *ERC721) invokeAndWait(code []byte, gasPrice, gasTipCap, gasFeeCap *big.
 		tx, err = e.SyncSendRawTransactionForTx(gasPrice, gasLimit, e.contr.Address(), code, nil)
 	} else {
 		tx, err = e.SyncSendEIP1559Tx(gasTipCap, gasFeeCap, gasLimit, e.contr.Address(), code, nil)
+	}
+
+	if err != nil {
+		return common.Hash{}, big.NewInt(0), err
+	}
+
+	if e.confirmation == 0 {
+		return tx.TxHash, big.NewInt(int64(gasLimit)), nil
+	}
+
+	if err := e.WaitBlock(uint64(e.confirmation)); err != nil {
+		return common.Hash{}, big.NewInt(0), err
+	}
+
+	return tx.TxHash, big.NewInt(int64(gasLimit)), nil
+}
+
+func (e *ERC721) invokeAndWaitCall(code []byte, gasPrice, gasLimit, gasTipCap, gasFeeCap *big.Int) (common.Hash, error) {
+
+	var tx *eTypes.Receipt
+	var err error
+	if gasPrice != nil {
+		tx, err = e.SyncSendRawTransactionForTx(gasPrice, gasLimit.Uint64(), e.contr.Address(), code, nil)
+	} else {
+		tx, err = e.SyncSendEIP1559Tx(gasTipCap, gasFeeCap, gasLimit.Uint64(), e.contr.Address(), code, nil)
 	}
 
 	if err != nil {
