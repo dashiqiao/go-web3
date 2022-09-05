@@ -158,6 +158,20 @@ func (c *Contract) EncodeABI(methodName string, args ...interface{}) ([]byte, er
 	return append(data, inputData...), nil
 }
 
+func (c *Contract) CallEncodeABI(methodName []byte, args ...interface{}) ([]byte, error) {
+	m := c.Methods("")
+	//if len(m.ID) == 0 {
+	//	return nil, fmt.Errorf("method %v not found", methodName)
+	//}
+	//data := m.ID
+
+	inputData, err := m.Inputs.Pack(args...)
+	if err != nil {
+		return nil, err
+	}
+	return append(methodName, inputData...), nil
+}
+
 func NewContract(abiString string, contractAddr ...string) (*Contract, error) {
 	if len(abiString) == 0 {
 		return nil, errors.New("invalid abi json string")
