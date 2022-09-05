@@ -110,6 +110,16 @@ func (e *ERC20) Approve(spender common.Address, limit, gasPrice, gasTipCap, gasF
 	return e.invokeAndWait(code, gasPrice, gasTipCap, gasFeeCap)
 }
 
+func (e *ERC20) ApproveGasLimit(spender common.Address, limit, gasPrice, gasLimit, gasTipCap, gasFeeCap *big.Int) (hash common.Hash, ng *big.Int, err error) {
+
+	code, err := e.contr.EncodeABI("approve", spender, limit)
+	if err != nil {
+		return common.Hash{}, big.NewInt(0), err
+	}
+
+	return e.invokeAndWaitGasLimit(code, gasPrice, gasLimit, gasTipCap, gasFeeCap)
+}
+
 func (e *ERC20) ApproveCall(spender common.Address, limit, gasPrice, gasLimit, gasTipCap, gasFeeCap *big.Int) (hash common.Hash, err error) {
 
 	code, err := e.contr.EncodeABI("approve", spender, limit)
@@ -290,6 +300,34 @@ func (e *ERC20) invokeAndWait(code []byte, gasPrice, gasTipCap, gasFeeCap *big.I
 		return common.Hash{}, big.NewInt(0), err
 	}
 
+	var tx *eTypes.Receipt
+	if gasPrice != nil {
+		tx, err = e.SyncSendRawTransactionForTx(gasPrice, gasLimit, e.contr.Address(), code, nil)
+	} else {
+		tx, err = e.SyncSendEIP1559Tx(gasTipCap, gasFeeCap, gasLimit, e.contr.Address(), code, nil)
+	}
+
+	if err != nil {
+		return common.Hash{}, big.NewInt(0), err
+	}
+
+	if e.confirmation == 0 {
+		return tx.TxHash, big.NewInt(int64(gasLimit)), nil
+	}
+
+	if err := e.WaitBlock(uint64(e.confirmation)); err != nil {
+		return common.Hash{}, big.NewInt(0), err
+	}
+
+	return tx.TxHash, big.NewInt(int64(gasLimit)), nil
+}
+
+func (e *ERC20) invokeAndWaitGasLimit(code []byte, gasPrice, newGasLimit, gasTipCap, gasFeeCap *big.Int) (common.Hash, *big.Int, error) {
+	gasLimit, err := e.EstimateGasLimit(e.contr.Address(), code, nil, nil)
+	if err != nil {
+		return common.Hash{}, big.NewInt(0), err
+	}
+	gasLimit = gasLimit + newGasLimit.Uint64()
 	var tx *eTypes.Receipt
 	if gasPrice != nil {
 		tx, err = e.SyncSendRawTransactionForTx(gasPrice, gasLimit, e.contr.Address(), code, nil)
