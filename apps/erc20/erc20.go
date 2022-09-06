@@ -197,49 +197,53 @@ func (e *ERC20) SyncSendRawTransactionForTx(
 		return nil, err
 	}
 
-	type ReceiptCh struct {
-		ret *eTypes.Receipt
-		err error
-	}
+	ret := new(eTypes.Receipt)
+	ret.TxHash = hash
 
-	var timeoutFlag int32
-	ch := make(chan *ReceiptCh, 1)
+	return ret, nil
+	//type ReceiptCh struct {
+	//	ret *eTypes.Receipt
+	//	err error
+	//}
 
-	go func() {
-		for {
-			receipt, err := e.w3.Eth.GetTransactionReceipt(hash)
-			if err != nil && err.Error() != "not found" {
-				ch <- &ReceiptCh{
-					err: err,
-				}
-				break
-			}
-			if receipt != nil {
-				ch <- &ReceiptCh{
-					ret: receipt,
-					err: nil,
-				}
-				break
-			}
-			if atomic.LoadInt32(&timeoutFlag) == 1 {
-				break
-			}
-		}
-		// fmt.Println("send tx done")
-	}()
+	//var timeoutFlag int32
+	//ch := make(chan *ReceiptCh, 1)
+	//
+	//go func() {
+	//	for {
+	//		receipt, err := e.w3.Eth.GetTransactionReceipt(hash)
+	//		if err != nil && err.Error() != "not found" {
+	//			ch <- &ReceiptCh{
+	//				err: err,
+	//			}
+	//			break
+	//		}
+	//		if receipt != nil {
+	//			ch <- &ReceiptCh{
+	//				ret: receipt,
+	//				err: nil,
+	//			}
+	//			break
+	//		}
+	//		if atomic.LoadInt32(&timeoutFlag) == 1 {
+	//			break
+	//		}
+	//	}
+	//	// fmt.Println("send tx done")
+	//}()
 
-	select {
-	case result := <-ch:
-		if result.err != nil {
-			return nil, err
-		}
-
-		return result.ret, nil
-	case <-time.After(time.Duration(e.txPollTimeout) * time.Second):
-		atomic.StoreInt32(&timeoutFlag, 1)
-		return nil, fmt.Errorf("transaction was not mined within %v seconds, "+
-			"please make sure your transaction was properly sent. Be aware that it might still be mined!", e.txPollTimeout)
-	}
+	//select {
+	//case result := <-ch:
+	//	if result.err != nil {
+	//		return nil, err
+	//	}
+	//
+	//	return result.ret, nil
+	//case <-time.After(time.Duration(e.txPollTimeout) * time.Second):
+	//	atomic.StoreInt32(&timeoutFlag, 1)
+	//	return nil, fmt.Errorf("transaction was not mined within %v seconds, "+
+	//		"please make sure your transaction was properly sent. Be aware that it might still be mined!", e.txPollTimeout)
+	//}
 }
 
 func (e *ERC20) SyncSendEIP1559Tx(
@@ -321,9 +325,9 @@ func (e *ERC20) invokeAndWait(code []byte, gasPrice, gasTipCap, gasFeeCap *big.I
 		return tx.TxHash, big.NewInt(int64(gasLimit)), nil
 	}
 
-	if err := e.WaitBlock(uint64(e.confirmation)); err != nil {
-		return common.Hash{}, big.NewInt(0), err
-	}
+	//if err := e.WaitBlock(uint64(e.confirmation)); err != nil {
+	//	return common.Hash{}, big.NewInt(0), err
+	//}
 
 	return tx.TxHash, big.NewInt(int64(gasLimit)), nil
 }
@@ -349,9 +353,9 @@ func (e *ERC20) invokeAndWaitGasLimit(code []byte, gasPrice, newGasLimit, gasTip
 		return tx.TxHash, big.NewInt(int64(gasLimit)), nil
 	}
 
-	if err := e.WaitBlock(uint64(e.confirmation)); err != nil {
-		return common.Hash{}, big.NewInt(0), err
-	}
+	//if err := e.WaitBlock(uint64(e.confirmation)); err != nil {
+	//	return common.Hash{}, big.NewInt(0), err
+	//}
 
 	return tx.TxHash, big.NewInt(int64(gasLimit)), nil
 }
@@ -374,9 +378,9 @@ func (e *ERC20) invokeAndWaitCall(code []byte, gasPrice, gasLimit, gasTipCap, ga
 		return tx.TxHash, nil
 	}
 
-	if err := e.WaitBlock(uint64(e.confirmation)); err != nil {
-		return common.Hash{}, err
-	}
+	//if err := e.WaitBlock(uint64(e.confirmation)); err != nil {
+	//	return common.Hash{}, err
+	//}
 
 	return tx.TxHash, nil
 }

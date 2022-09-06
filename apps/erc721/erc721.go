@@ -265,49 +265,53 @@ func (e *ERC721) SyncSendRawTransactionForTx(
 		return nil, err
 	}
 
-	type ReceiptCh struct {
-		ret *eTypes.Receipt
-		err error
-	}
+	ret := new(eTypes.Receipt)
+	ret.TxHash = hash
 
-	var timeoutFlag int32
-	ch := make(chan *ReceiptCh, 1)
-
-	go func() {
-		for {
-			receipt, err := e.w3.Eth.GetTransactionReceipt(hash)
-			if err != nil && err.Error() != "not found" {
-				ch <- &ReceiptCh{
-					err: err,
-				}
-				break
-			}
-			if receipt != nil {
-				ch <- &ReceiptCh{
-					ret: receipt,
-					err: nil,
-				}
-				break
-			}
-			if atomic.LoadInt32(&timeoutFlag) == 1 {
-				break
-			}
-		}
-		// fmt.Println("send tx done")
-	}()
-
-	select {
-	case result := <-ch:
-		if result.err != nil {
-			return nil, err
-		}
-
-		return result.ret, nil
-	case <-time.After(time.Duration(e.txPollTimeout) * time.Second):
-		atomic.StoreInt32(&timeoutFlag, 1)
-		return nil, fmt.Errorf("transaction was not mined within %v seconds, "+
-			"please make sure your transaction was properly sent. Be aware that it might still be mined!", e.txPollTimeout)
-	}
+	return ret, nil
+	//type ReceiptCh struct {
+	//	ret *eTypes.Receipt
+	//	err error
+	//}
+	//
+	//var timeoutFlag int32
+	//ch := make(chan *ReceiptCh, 1)
+	//
+	//go func() {
+	//	for {
+	//		receipt, err := e.w3.Eth.GetTransactionReceipt(hash)
+	//		if err != nil && err.Error() != "not found" {
+	//			ch <- &ReceiptCh{
+	//				err: err,
+	//			}
+	//			break
+	//		}
+	//		if receipt != nil {
+	//			ch <- &ReceiptCh{
+	//				ret: receipt,
+	//				err: nil,
+	//			}
+	//			break
+	//		}
+	//		if atomic.LoadInt32(&timeoutFlag) == 1 {
+	//			break
+	//		}
+	//	}
+	//	// fmt.Println("send tx done")
+	//}()
+	//
+	//select {
+	//case result := <-ch:
+	//	if result.err != nil {
+	//		return nil, err
+	//	}
+	//
+	//	return result.ret, nil
+	//case <-time.After(time.Duration(e.txPollTimeout) * time.Second):
+	//	atomic.StoreInt32(&timeoutFlag, 1)
+	//	return nil, fmt.Errorf("transaction was not mined within %v seconds, "+
+	//		"please make sure your transaction was properly sent. Be aware that it might still be mined!", e.txPollTimeout)
+	//}
 }
 
 func (e *ERC721) invokeAndWait(code []byte, gasPrice, gasTipCap, gasFeeCap *big.Int) (common.Hash, *big.Int, error) {
