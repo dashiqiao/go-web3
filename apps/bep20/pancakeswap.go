@@ -147,6 +147,16 @@ func (e *ERC20PancakeSwap) SwapTokensForExactTokens(amountOut, amountInMax *big.
 	return
 }
 
+func (e *ERC20PancakeSwap) SwapTokensForExactTokensCall(amountOut, amountInMax *big.Int, path []common.Address, to common.Address, deadline, gasPrice, gasLimit, gasTipCap, gasFeeCap *big.Int) (hash common.Hash, err error) {
+	code, err := e.contr.EncodeABI("swapTokensForExactTokens",
+		amountOut, amountInMax, path, to, deadline)
+	if err != nil {
+		return common.Hash{}, err
+	}
+	hash, err = e.invokeAndWaitCall(code, gasPrice, gasLimit, gasTipCap, gasFeeCap, 0)
+	return
+}
+
 func (e *ERC20PancakeSwap) SwapExactTokensForTokensSupportingFeeOnTransferTokensNonce(amountIn, amountOutMin *big.Int, path []common.Address, to common.Address, deadline, gasPrice, gasLimit, gasTipCap, gasFeeCap *big.Int, nonce uint64) (hash common.Hash, ng *big.Int, err error) {
 	code, err := e.contr.EncodeABI("swapExactTokensForTokensSupportingFeeOnTransferTokens",
 		amountIn, amountOutMin, path, to, deadline)
