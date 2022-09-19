@@ -33,14 +33,7 @@ func NewBEP20Factory(w3 *web3.Web3, contractAddress common.Address) (*BEP20Facto
 	return e, nil
 }
 
-func (e *BEP20Factory) GetPair(address1, address2 common.Address, gasPrice *big.Int) (hash common.Address, err error) {
-	//code, err := e.contr.EncodeABI("getPair", address1, address2)
-	//if err != nil {
-	//	return common.Hash{}, err
-	//}
-	//
-	//hash, _, err = e.invokeAndWait(code, big.NewInt(0), gasPrice, nil, nil)
-
+func (e *BEP20Factory) GetPair(address1, address2 common.Address) (hash common.Address, err error) {
 	ret, err := e.contr.Call("getPair", address1, address2)
 	if err != nil {
 		return common.HexToAddress(""), err
