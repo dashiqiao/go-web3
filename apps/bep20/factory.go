@@ -21,7 +21,7 @@ type BEP20Factory struct {
 }
 
 func NewBEP20Factory(w3 *web3.Web3, contractAddress common.Address) (*BEP20Factory, error) {
-	contr, err := w3.Eth.NewContract(PancakeSwap_ABI, contractAddress.String())
+	contr, err := w3.Eth.NewContract(Factory_ABI, contractAddress.String())
 	if err != nil {
 		return nil, err
 	}
