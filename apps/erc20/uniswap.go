@@ -30,7 +30,7 @@ func NewUniSwap(w3 *web3.Web3, contractAddress common.Address) (*UniSwap, error)
 	return e, nil
 }
 
-func (e *UniSwap) SwapETHForExactTokens(amountOut *big.Int, path []common.Address, to common.Address, deadline, gasPrice *big.Int) (hash common.Hash, err error) {
+func (e *UniSwap) SwapETHForExactTokens(amountOut *big.Int, path []common.Address, to common.Address, deadline, gasPrice *big.Int, gasLimit uint64) (hash common.Hash, err error) {
 
 	code, err := e.contr.EncodeABI("swapETHForExactTokens", amountOut, path, to, deadline)
 	//fmt.Println("============", string(code))
@@ -38,15 +38,15 @@ func (e *UniSwap) SwapETHForExactTokens(amountOut *big.Int, path []common.Addres
 		return common.Hash{}, err
 	}
 
-	hash, _, err = e.invokeAndWait(code, gasPrice, nil, nil)
+	hash, err = e.invokeAndWait(code, gasPrice, gasLimit)
 	return
 }
 
-func (e *UniSwap) invokeAndWait(code []byte, gasPrice, gasTipCap, gasFeeCap *big.Int) (common.Hash, *big.Int, error) {
-	gasLimit, err := e.EstimateGasLimit(e.contr.Address(), code, nil, nil)
-	if err != nil {
-		return common.Hash{}, big.NewInt(0), err
-	}
+func (e *UniSwap) invokeAndWait(code []byte, gasPrice *big.Int, gasLimit uint64) (hash common.Hash, err error) {
+	//gasLimit, err := e.EstimateGasLimit(e.contr.Address(), code, nil, nil)
+	//if err != nil {
+	//	return common.Hash{}, big.NewInt(0), err
+	//}
 
 	var tx *eTypes.Receipt
 	if gasPrice != nil {
@@ -54,18 +54,18 @@ func (e *UniSwap) invokeAndWait(code []byte, gasPrice, gasTipCap, gasFeeCap *big
 	}
 
 	if err != nil {
-		return common.Hash{}, big.NewInt(0), err
+		return
 	}
 
 	if e.confirmation == 0 {
-		return tx.TxHash, big.NewInt(int64(gasLimit)), nil
+		return tx.TxHash, nil
 	}
 
 	//if err := e.WaitBlock(uint64(e.confirmation)); err != nil {
 	//	return common.Hash{}, big.NewInt(0), err
 	//}
 
-	return tx.TxHash, big.NewInt(int64(gasLimit)), nil
+	return tx.TxHash, nil
 }
 
 func (e *UniSwap) EstimateGasLimit(to common.Address, data []byte, gasPrice, wei *big.Int) (uint64, error) {
