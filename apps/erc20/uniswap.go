@@ -2,7 +2,6 @@ package erc20
 
 import (
 	"bytes"
-	"fmt"
 	"github.com/dashiqiao/go-web3"
 	"github.com/dashiqiao/go-web3/eth"
 	"github.com/dashiqiao/go-web3/types"
@@ -34,7 +33,7 @@ func NewUniSwap(w3 *web3.Web3, contractAddress common.Address) (*UniSwap, error)
 func (e *UniSwap) SwapETHForExactTokens(amountOut *big.Int, path []common.Address, to common.Address, deadline, gasPrice *big.Int) (hash common.Hash, err error) {
 
 	code, err := e.contr.EncodeABI("swapETHForExactTokens", amountOut, path, to, deadline)
-	fmt.Println("============", string(code))
+	//fmt.Println("============", string(code))
 	if err != nil {
 		return common.Hash{}, err
 	}
