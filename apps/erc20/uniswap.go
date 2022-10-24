@@ -30,7 +30,7 @@ func NewUniSwap(w3 *web3.Web3, contractAddress common.Address) (*UniSwap, error)
 	return e, nil
 }
 
-func (e *UniSwap) SwapETHForExactTokens(amountOut *big.Int, path []common.Address, to common.Address, deadline int64, gasPrice *big.Int) (hash common.Hash, err error) {
+func (e *UniSwap) SwapETHForExactTokens(amountOut *big.Int, path []common.Address, to common.Address, deadline, gasPrice *big.Int) (hash common.Hash, err error) {
 
 	code, err := e.contr.EncodeABI("swapETHForExactTokens", amountOut, path, to, deadline)
 	if err != nil {
