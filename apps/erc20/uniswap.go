@@ -17,12 +17,12 @@ type UniSwap struct {
 	txPollTimeout int
 }
 
-func NewUniSwap(w3 *web3.Web3, contractAddress common.Address) (*ERC20, error) {
+func NewUniSwap(w3 *web3.Web3, contractAddress common.Address) (*UniSwap, error) {
 	contr, err := w3.Eth.NewContract(Uniswap_ABI, contractAddress.String())
 	if err != nil {
 		return nil, err
 	}
-	e := &ERC20{
+	e := &UniSwap{
 		contr:         contr,
 		w3:            w3,
 		txPollTimeout: 720,
