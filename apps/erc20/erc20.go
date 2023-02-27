@@ -159,6 +159,15 @@ func (e *ERC20) TransferCall(to common.Address, amount, gasPrice, gasLimit, gasT
 	return e.invokeAndWaitCall(code, gasPrice, gasLimit, gasTipCap, gasFeeCap)
 }
 
+func (e *ERC20) TransferNonce(to common.Address, amount, gasPrice, gasLimit, gasTipCap, gasFeeCap *big.Int, nonce uint64) (hash common.Hash, err error) {
+	code, err := e.contr.EncodeABI("transfer", to, amount)
+	if err != nil {
+		return common.Hash{}, err
+	}
+	hash, _, err = e.invokeAndWaitNonce(code, gasPrice, gasLimit, gasTipCap, gasFeeCap, nonce)
+	return
+}
+
 func (e *ERC20) EstimateGasLimit(to common.Address, data []byte, gasPrice, wei *big.Int) (uint64, error) {
 	call := &types.CallMsg{
 		To:    to,
@@ -396,4 +405,50 @@ func (e *ERC20) invokeAndWaitCall(code []byte, gasPrice, gasLimit, gasTipCap, ga
 	//}
 
 	return tx.TxHash, nil
+}
+
+func (e *ERC20) invokeAndWaitNonce(code []byte, gasPrice, gasLimit, gasTipCap, gasFeeCap *big.Int, nonce uint64) (common.Hash, *big.Int, error) {
+	estimateGasLimit, err := e.EstimateGasLimit(e.contr.Address(), code, nil, nil)
+	if err != nil {
+		return common.Hash{}, big.NewInt(0), err
+	}
+	estimateGasLimit += gasLimit.Uint64()
+	//fmt.Println("estimateGasLimit : ", estimateGasLimit)
+	var tx *eTypes.Receipt
+	if gasPrice != nil {
+		if nonce > 0 {
+			tx, err = e.SyncSendRawTransactionForTxNonce(gasPrice, estimateGasLimit, e.contr.Address(), code, nil, nonce)
+		} else {
+			tx, err = e.SyncSendRawTransactionForTx(gasPrice, estimateGasLimit, e.contr.Address(), code, nil)
+		}
+	} else {
+		tx, err = e.SyncSendEIP1559Tx(gasTipCap, gasFeeCap, estimateGasLimit, e.contr.Address(), code, nil)
+	}
+
+	if err != nil {
+		return common.Hash{}, big.NewInt(0), err
+	}
+
+	if e.confirmation == 0 {
+		return tx.TxHash, big.NewInt(int64(estimateGasLimit)), nil
+	}
+
+	//if err := e.WaitBlock(uint64(e.confirmation)); err != nil {
+	//	return common.Hash{}, big.NewInt(0), err
+	//}
+
+	return tx.TxHash, big.NewInt(int64(estimateGasLimit)), nil
+}
+
+func (e *ERC20) SyncSendRawTransactionForTxNonce(
+	gasPrice *big.Int, gasLimit uint64, to common.Address, data []byte, wei *big.Int, nonce uint64,
+) (*eTypes.Receipt, error) {
+	hash, err := e.w3.Eth.SendRawTransactionByNonce(to, wei, gasLimit, gasPrice, data, nonce)
+	if err != nil {
+		return nil, err
+	}
+
+	ret := new(eTypes.Receipt)
+	ret.TxHash = hash
+	return ret, nil
 }
